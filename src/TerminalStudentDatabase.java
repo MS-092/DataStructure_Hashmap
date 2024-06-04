@@ -1,10 +1,8 @@
-import java.util.HashMap;
-import java.util.Scanner;
+import java.util.*;
 
 public class TerminalStudentDatabase {
 
     private static HashMap<String, Student> students = new HashMap<>();
-
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
@@ -17,7 +15,8 @@ public class TerminalStudentDatabase {
             System.out.println("2. View Students");
             System.out.println("3. Remove Student");
             System.out.println("4. Search Student");
-            System.out.println("5. Exit");
+            System.out.println("5. Sort Student");
+            System.out.println("6. Exit");
             System.out.print("Select an option: ");
             int choice = scanner.nextInt();
 
@@ -38,6 +37,9 @@ public class TerminalStudentDatabase {
                     searchStudent(scanner);
                     break;
                 case 5:
+                    sortStudent(scanner);
+                    break;
+                case 6:
                     running = false;
                     break;
                 default:
@@ -170,6 +172,38 @@ public class TerminalStudentDatabase {
         return null;
     }
 
+    // Method to sort students by final score
+    private static void sortStudent(Scanner scanner) {
+        System.out.println("Choose the sorting criteria:\n1. By Name\n2. By Age\n3. By Final Score");
+        int choice = scanner.nextInt();
+
+        List<Student> studentsList = new ArrayList<>(students.values());
+        Comparator<Student> comparator;
+
+        switch (choice) {
+            case 1:
+                comparator = Comparator.comparing(Student::getName);
+                break;
+            case 2:
+                comparator = Comparator.comparingInt(Student::getAge);
+                break;
+            case 3:
+                comparator = Comparator.comparingDouble(Student::getFinalscore);
+                break;
+            default:
+                System.out.println("Invalid selection. Sorting by name.");
+                comparator = Comparator.comparing(Student::getName);
+        }
+
+        studentsList.sort(comparator.reversed()); // Sort in descending order
+
+        System.out.println("\nSorted Students:");
+        for (Student student : studentsList) {
+            System.out.println(student);
+        }
+    }
+
+
     public static class Student {
         private String id;
         private String name;
@@ -186,11 +220,28 @@ public class TerminalStudentDatabase {
             this.gender = gender;
             this.assignment1 = assignment1;
             this.assignment2 = assignment2;
-            calculateFinalScore();
+            this.finalscore = calculateFinalScore();
         }
 
-        public void calculateFinalScore() {
-            this.finalscore = (this.assignment1 * 0.35) + (this.assignment2 * 0.65);
+        // Getter for name
+        public String getName() {
+            return name;
+        }
+
+        // Getter for age
+        public int getAge() {
+            return age;
+        }
+
+        // Getter for final score
+        public double getFinalscore() {
+            return finalscore;
+        }
+
+        private double calculateFinalScore() {
+            double percentage1 = 0.35;
+            double percentage2 = 0.65;
+            return (assignment1 * percentage1) + (assignment2 * percentage2);
         }
 
         @Override
