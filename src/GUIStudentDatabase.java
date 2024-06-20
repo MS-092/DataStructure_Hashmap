@@ -8,6 +8,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -179,6 +180,12 @@ public class GUIStudentDatabase extends JFrame {
             double assignment1 = Double.parseDouble(assignment1Field.getText());
             double assignment2 = Double.parseDouble(assignment2Field.getText());
 
+            // Exception statement for adding student
+            if (students.containsKey(id)) {
+                JOptionPane.showMessageDialog(this, "Student with this ID already exists. Please enter a different ID.");
+                return;
+            }
+
             Student student = new Student(id, name, age, gender, assignment1, assignment2);
             students.put(id, student);
             addStudentToTable(student);
@@ -223,8 +230,34 @@ public class GUIStudentDatabase extends JFrame {
     private void search() {
         String searchText = searchField.getText().toLowerCase();
         TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(tableModel);
-        sorter.setRowFilter(RowFilter.regexFilter("(?i)" + searchText));
-        ((JTable) ((JScrollPane) getContentPane().getComponent(0)).getViewport().getView()).setRowSorter(sorter);
+        sorter.setRowFilter(null);
+
+        // Get all students from the HashMap and store them in a list
+        List<Student> studentsList = new ArrayList<>();
+        for (Student student : this.students.values()) {
+            if (student.getName().toLowerCase().contains(searchText) ||
+                    String.valueOf(student.getAge()).contains(searchText) ||
+                    student.getGender().contains(searchText) ||
+                    String.valueOf(student.getAssignment1()).contains(searchText) ||
+                    String.valueOf(student.getAssignment2()).contains(searchText)) {
+                studentsList.add(student);
+            }
+        }
+
+        // Update the table model with the filtered students
+        tableModel.setRowCount(0);
+        for (Student student : studentsList) {
+            Object[] rowData = {
+                    student.getId(),
+                    student.getName(),
+                    student.getAge(),
+                    student.getGender(),
+                    student.getAssignment1(),
+                    student.getAssignment2(),
+                    student.getFinalScore()
+            };
+            tableModel.addRow(rowData);
+        }
     }
 
     private void updateFormula() {
@@ -262,84 +295,5 @@ public class GUIStudentDatabase extends JFrame {
             students.put(ids[i], student);
             addStudentToTable(student);
         }
-    }
-
-    public static class Student {
-        private String id;
-        private String name;
-        private int age;
-        private String gender;
-        private double assignment1;
-        private double assignment2;
-        private double finalScore;
-        private double formula1 = 0.35;
-        private double formula2 = 0.65;
-
-        public Student(String id, String name, int age, String gender, double assignment1, double assignment2) {
-            this.id = id;
-            this.name = name;
-            this.age = age;
-            this.gender = gender;
-            this.assignment1 = assignment1;
-            this.assignment2 = assignment2;
-            calculateFinalScore();
-        }
-
-        public void calculateFinalScore() {
-            this.finalScore = (this.assignment1 * formula1) + (this.assignment2 * formula2);
-        }
-
-        public String getId() {
-            return id;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public int getAge() {
-            return age;
-        }
-
-        public String getGender() {
-            return gender;
-        }
-
-        public double getAssignment1() {
-            return assignment1;
-        }
-
-        public void setAssignment1(double assignment1) {
-            this.assignment1 = assignment1;
-        }
-
-        public double getAssignment2() {
-            return assignment2;
-        }
-
-        public void setAssignment2(double assignment2) {
-            this.assignment2 = assignment2;
-        }
-
-        public double getFinalScore() {
-            return finalScore;
-        }
-
-        public void setFormula1(double formula1) {
-            this.formula1 = formula1;
-        }
-
-        public void setFormula2(double formula2) {
-            this.formula2 = formula2;
-        }
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                GUIStudentDatabase gui = new GUIStudentDatabase();
-                gui.setVisible(true);
-            }
-        });
     }
 }
