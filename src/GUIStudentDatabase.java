@@ -8,8 +8,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.io.*;
+import java.util.*;
 import java.util.List;
 
 public class GUIStudentDatabase extends JFrame {
@@ -20,6 +20,8 @@ public class GUIStudentDatabase extends JFrame {
     private JTextField formula1Field;
     private JTextField formula2Field;
     private TableRowSorter<DefaultTableModel> sorter;
+    // CSV File for students' data
+    private static final String CSV_FILE_PATH = "students.csv";
 
     public GUIStudentDatabase() {
         setTitle("Student Database Management System");
@@ -150,8 +152,11 @@ public class GUIStudentDatabase extends JFrame {
 
         add(panel);
 
-        // Pre-populate with sample data
-        addSampleData();
+        // Load data from CSV file
+        loadDataFromCSV();
+
+        // Add a shutdown hook to save data when the program exits
+        Runtime.getRuntime().addShutdownHook(new Thread(this::saveDataToCSV));
     }
 
     private void addStudent() {
@@ -280,20 +285,58 @@ public class GUIStudentDatabase extends JFrame {
         }
     }
 
-    private void addSampleData() {
-        String[] ids = {"S001", "S002", "S003", "S004", "S005", "S006", "S007", "S008", "S009", "S010",
-                "S011", "S012", "S013", "S014", "S015", "S016", "S017", "S018", "S019", "S020"};
-        String[] names = {"John", "Emily", "Michael", "Emma", "Daniel", "Olivia", "Matthew", "Sophia", "David", "Ava",
-                "James", "Isabella", "Benjamin", "Mia", "William", "Charlotte", "Ethan", "Amelia", "Alexander", "Harper"};
-        int[] ages = {20, 19, 21, 18, 22, 20, 19, 21, 18, 20, 19, 21, 18, 22, 20, 19, 21, 18, 20, 19};
-        String[] genders = {"M", "F", "M", "F", "M", "F", "M", "F", "M", "F", "M", "F", "M", "F", "M", "F", "M", "F", "M", "F"};
-        double[] assignment1Scores = {85.5, 92.0, 78.0, 88.5, 90.0, 95.0, 87.5, 91.0, 83.0, 89.5, 92.5, 88.0, 85.0, 93.0, 87.0, 91.5, 84.0, 90.5, 88.5, 92.0};
-        double[] assignment2Scores = {90.0, 88.5, 92.5, 87.0, 95.0, 91.0, 89.0, 93.5, 86.0, 92.0, 88.0, 94.0, 90.5, 87.5, 91.5, 89.5, 92.0, 88.0, 93.0, 90.0};
-
-        for (int i = 0; i < 20; i++) {
-            Student student = new Student(ids[i], names[i], ages[i], genders[i], assignment1Scores[i], assignment2Scores[i]);
-            students.put(ids[i], student);
-            addStudentToTable(student);
+    private void loadDataFromCSV() {
+        try (BufferedReader br = new BufferedReader(new FileReader(CSV_FILE_PATH))) {
+            String line;
+            boolean isFirstLine = true;
+            while ((line = br.readLine()) != null) {
+                if (isFirstLine) {
+                    isFirstLine = false;
+                    continue; // Skip the header line
+                }
+                String[] values = line.split(",");
+                Student student = new Student(
+                        values[0], // ID
+                        values[1], // Name
+                        Integer.parseInt(values[2]), // Age
+                        values[3], // Gender
+                        Double.parseDouble(values[4]), // Assignment1
+                        Double.parseDouble(values[5])  // Assignment2
+                );
+                students.put(student.getId(), student);
+                addStudentToTable(student);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error loading data from CSV file: " + e.getMessage());
         }
+    }
+
+    private void saveDataToCSV() {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(CSV_FILE_PATH))) {
+            // Write header
+            bw.write("ID,Name,Age,Gender,Assignment1,Assignment2");
+            bw.newLine();
+
+            // Write student data
+            for (Student student : students.values()) {
+                bw.write(String.format("%s,%s,%d,%s,%.1f,%.1f",
+                        student.getId(),
+                        student.getName(),
+                        student.getAge(),
+                        student.getGender(),
+                        student.getAssignment1(),
+                        student.getAssignment2()
+                ));
+                bw.newLine();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error saving data to CSV file: " + e.getMessage());
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new GUIStudentDatabase().setVisible(true));
     }
 }
